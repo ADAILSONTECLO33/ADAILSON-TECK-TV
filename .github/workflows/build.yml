@@ -24,21 +24,27 @@ jobs:
 
       - name: Preparar Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
 
       - name: Extrair projeto
         run: |
+          mkdir -p projeto
           unzip -o ADAILSON_TECK_TV_projeto.zip -d projeto
 
-      - name: Compilar APK
+      - name: Encontrar e compilar APK
         run: |
-          cd projeto
-          gradle assembleDebug
+          GRADLEW=$(find projeto -name gradlew -type f | head -n 1)
+          if [ -z "$GRADLEW" ]; then
+            echo "ERRO: Gradle Wrapper não encontrado"
+            find projeto -maxdepth 4 -type f | head -100
+            exit 1
+          fi
+          DIR=$(dirname "$GRADLEW")
+          cd "$DIR"
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
           name: ADAILSON-TECK-TV-APK
-          path: projeto/app/build/outputs/apk/debug/app-debug.apk
-          
+          path: projeto/**/build/outputs/apk/debug/*.apk
